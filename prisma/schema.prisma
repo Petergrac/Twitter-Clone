@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id             String @default(uuid()) @unique
+  username       String  @unique
+  display_name   String?
+  email          String @unique
+  password       String
+  bio            String?
+  location       String?
+  job            String?
+  website        String?
+  cover          String?
+  img            String?
+  createdAt      DateTime  @default(now())
+
+  // RELATIONS  
+  posts   Post[]
+  likes Like[]
+  saves SavedPosts[]
+  followers Follow[] @relation("User_Followers")
+  followings Follow[] @relation("User_Following")
+}
+
+model Post{
+  id              String @default(uuid()) @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  img             String?
+  video           String?
+  isSensitive     Boolean @default(false)
+  desc            String?
+  userId          String
+  rePostId        String?
+  parentPostId    String?
+
+  
+  comments Post[] @relation("PostComment")
+  rePosts Post[]  @relation("Reposts")
+  likes Like[]
+  saves SavedPosts[]
+
+  user      User @relation(fields: [userId], references: [id])
+  rePost   Post? @relation("Reposts" ,fields: [rePostId], references: [id])
+  parentPost  Post? @relation("PostComment",fields: [parentPostId],references: [id])
+}
+
+model Like{
+  id           String @default(uuid()) @unique
+  createdAt    DateTime @default(now())
+  userId       String
+  postId       String
+
+  user User @relation(fields: [userId],references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model SavedPosts{
+  id           String @default(uuid()) @unique
+  createdAt    DateTime @default(now())
+  
+  userId       String
+  postId       String
+
+  user User @relation(fields: [userId],references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model Follow{
+  id           String @default(uuid()) @unique
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  followerId   String
+  followingId  String
+
+  followers User @relation("User_Followers",fields: [followerId], references: [id])
+  followings User @relation("User_Following",fields: [followingId], references: [id])
+}
